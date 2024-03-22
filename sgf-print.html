@@ -1,0 +1,538 @@
+﻿<!DOCTYPE HTML>
+<html>
+
+<head>
+	<title>sgf-print</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=no" />
+	<meta mobile-web-app-capable="yes">
+	<meta apple-mobile-web-app-capable="yes">
+	<style media="all">
+		*,
+		*:before,
+		*:after {
+			box-sizing: border-box;
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+		}
+
+		@media print {
+			#controller {
+				display: none;
+			}
+
+			#main-area {
+				margin-top: 15mm;
+			}
+
+			@page {
+				size: auto;
+				margin: 0mm;
+			}
+		}
+
+		body {
+			width: 210mm;
+			margin: 0mm;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.flex-row {
+			display: flex;
+			flex-direction: row;
+			align-items: flex-start;
+			justify-content: flex-start;
+		}
+
+		.flex-column {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			justify-content: flex-start;
+		}
+
+		#controller {
+			margin-top: 10mm;
+			margin-bottom: 10mm;
+			padding: 2.5mm;
+			width: 171mm;
+			background-color: #eeeeee;
+			border: 0.5mm dashed gray;
+		}
+
+		.controller-step {
+			margin: 2.5mm;
+			font-size: 6mm;
+			height: 10mm;
+			font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+		}
+
+		.controller-step-sub {
+			margin: 2.5mm;
+			font-size: 4mm;
+			height: 8mm;
+			font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+		}
+
+		#print-range {
+			border: 0;
+			border-bottom: 1px solid black;
+			font-size: 6mm;
+			background-color: #eeeeee;
+		}
+
+		#print-button {
+			font-size: 6mm;
+		}
+
+		#print-file {
+			font-size: 6mm;
+		}
+
+		#main-area {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+		}
+
+		#game-info {
+			font-size: 9mm;
+			font-family: Arial, Helvetica, sans-serif;
+			margin-bottom: 2mm;
+		}
+
+		#game-players {
+			font-size: 6mm;
+			line-height: 9mm;
+			font-family: Arial, Helvetica, sans-serif;
+		}
+
+		#game-player-black,
+		#game-player-white,
+		#game-player-result {
+			margin-right: 6mm;
+		}
+
+		#sgf-metadata {
+			width: 171mm;
+		}
+
+		#overlap-stones-area {
+			width: 171mm;
+			display: flex;
+			flex-direction: row;
+			align-items: flex-start;
+			justify-content: flex-start;
+			flex-wrap: wrap;
+		}
+
+		.overlap-stones {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+			margin-right: 10mm;
+			margin-top: 2mm;
+		}
+
+		.overlap-equal {
+			width: 6mm;
+			text-align: center;
+			font-family: 'Courier New', Courier, monospace;
+			font-weight: 700;
+			font-size: 6mm;
+		}
+
+		#board {
+			width: 189mm;
+			background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJoZXhhZ29uIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIKCSB2aWV3Qm94PSIwIDAgMTg5MCAxODkwIiB4bWw6c3BhY2U9InByZXNlcnZlIj4KICA8c3R5bGU+CiAgICAubCB7c3Ryb2tlLWxpbmVjYXA6c3F1YXJlO3N0cm9rZTpibGFjaztzdHJva2Utd2lkdGg6Mjt9CiAgICAuYiB7c3Ryb2tlLWxpbmVjYXA6c3F1YXJlO3N0cm9rZTpibGFjaztzdHJva2Utd2lkdGg6Njt9CiAgICAuYyB7ZmlsbDpibGFjazt9CiAgPC9zdHlsZT4KCiAgPGxpbmUgeDE9IjEzNCIgeDI9IjEzNCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJiIi8+CiAgPGxpbmUgeDE9IjIyNCIgeDI9IjIyNCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9IjMxNCIgeDI9IjMxNCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9IjQwNCIgeDI9IjQwNCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9IjQ5NCIgeDI9IjQ5NCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9IjU4NCIgeDI9IjU4NCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9IjY3NCIgeDI9IjY3NCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9Ijc2NCIgeDI9Ijc2NCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9Ijg1NCIgeDI9Ijg1NCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9Ijk0NCIgeDI9Ijk0NCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9IjEwMzQiIHgyPSIxMDM0IiB5MT0iMTM0IiB5Mj0iMTc1NiIgY2xhc3M9ImwiLz4KICA8bGluZSB4MT0iMTEyNCIgeDI9IjExMjQiIHkxPSIxMzQiIHkyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHgxPSIxMjE0IiB4Mj0iMTIxNCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9IjEzMDQiIHgyPSIxMzA0IiB5MT0iMTM0IiB5Mj0iMTc1NiIgY2xhc3M9ImwiLz4KICA8bGluZSB4MT0iMTM5NCIgeDI9IjEzOTQiIHkxPSIxMzQiIHkyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHgxPSIxNDg0IiB4Mj0iMTQ4NCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeDE9IjE1NzQiIHgyPSIxNTc0IiB5MT0iMTM0IiB5Mj0iMTc1NiIgY2xhc3M9ImwiLz4KICA8bGluZSB4MT0iMTY2NCIgeDI9IjE2NjQiIHkxPSIxMzQiIHkyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHgxPSIxNzU0IiB4Mj0iMTc1NCIgeTE9IjEzNCIgeTI9IjE3NTYiIGNsYXNzPSJiIi8+CgogIDxsaW5lIHkxPSIxMzQiIHkyPSIxMzQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0iYiIvPgogIDxsaW5lIHkxPSIyMjQiIHkyPSIyMjQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSIzMTQiIHkyPSIzMTQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSI0MDQiIHkyPSI0MDQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSI0OTQiIHkyPSI0OTQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSI1ODQiIHkyPSI1ODQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSI2NzQiIHkyPSI2NzQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSI3NjQiIHkyPSI3NjQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSI4NTQiIHkyPSI4NTQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSI5NDQiIHkyPSI5NDQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSIxMDM0IiB5Mj0iMTAzNCIgeDE9IjEzNCIgeDI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeTE9IjExMjQiIHkyPSIxMTI0IiB4MT0iMTM0IiB4Mj0iMTc1NiIgY2xhc3M9ImwiLz4KICA8bGluZSB5MT0iMTIxNCIgeTI9IjEyMTQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSIxMzA0IiB5Mj0iMTMwNCIgeDE9IjEzNCIgeDI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeTE9IjEzOTQiIHkyPSIxMzk0IiB4MT0iMTM0IiB4Mj0iMTc1NiIgY2xhc3M9ImwiLz4KICA8bGluZSB5MT0iMTQ4NCIgeTI9IjE0ODQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0ibCIvPgogIDxsaW5lIHkxPSIxNTc0IiB5Mj0iMTU3NCIgeDE9IjEzNCIgeDI9IjE3NTYiIGNsYXNzPSJsIi8+CiAgPGxpbmUgeTE9IjE2NjQiIHkyPSIxNjY0IiB4MT0iMTM0IiB4Mj0iMTc1NiIgY2xhc3M9ImwiLz4KICA8bGluZSB5MT0iMTc1NCIgeTI9IjE3NTQiIHgxPSIxMzQiIHgyPSIxNzU2IiBjbGFzcz0iYiIvPgogIAogIDxjaXJjbGUgY3g9IjQwNCIgY3k9IjQwNCIgcj0iOCIgY2xhc3M9ImMiLz4KICA8Y2lyY2xlIGN4PSI0MDQiIGN5PSI5NDQiIHI9IjgiIGNsYXNzPSJjIi8+CiAgPGNpcmNsZSBjeD0iNDA0IiBjeT0iMTQ4NCIgcj0iOCIgY2xhc3M9ImMiLz4KCiAgPGNpcmNsZSBjeD0iOTQ0IiBjeT0iNDA0IiByPSI4IiBjbGFzcz0iYyIvPgogIDxjaXJjbGUgY3g9Ijk0NCIgY3k9Ijk0NCIgcj0iOCIgY2xhc3M9ImMiLz4KICA8Y2lyY2xlIGN4PSI5NDQiIGN5PSIxNDg0IiByPSI4IiBjbGFzcz0iYyIvPgoKICA8Y2lyY2xlIGN4PSIxNDg0IiBjeT0iNDA0IiByPSI4IiBjbGFzcz0iYyIvPgogIDxjaXJjbGUgY3g9IjE0ODQiIGN5PSI5NDQiIHI9IjgiIGNsYXNzPSJjIi8+CiAgPGNpcmNsZSBjeD0iMTQ4NCIgY3k9IjE0ODQiIHI9IjgiIGNsYXNzPSJjIi8+Cjwvc3ZnPgo=");
+			background-size: cover;
+			background-repeat: no-repeat;
+			background-position: center;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.board-row {
+			width: 189mm;
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.board-cell {
+			width: 9mm;
+			height: 9mm;
+		}
+
+		.board-cell-for-coordinates {
+			visibility: hidden;
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.board-cell-coordinates-text {
+			width: 100%;
+			text-align: center;
+			font-family: 'Courier New', Courier, monospace;
+			font-weight: 500;
+		}
+
+		.stone {
+			width: 8mm;
+			height: 8mm;
+			margin: 0.5mm;
+			border-radius: 50%;
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.stone-black {
+			background-color: black;
+			color: white
+		}
+
+		.stone-white {
+			background-color: white;
+			border-color: black;
+			border-style: solid;
+			border-width: 0.3mm;
+			color: black;
+		}
+
+		.stone-text {
+			width: 100%;
+			text-align: center;
+			font-family: 'SF Mono', 'Courier New', Courier, monospace;
+			font-weight: 600;
+		}
+
+		.stone-text-small {
+			font-size: 3.4mm;
+		}
+
+		.stone-text-big {
+			font-size: 5mm;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="header">
+
+	</div>
+	<div id="controller">
+		<div class="controller-step">1. 选择棋谱：<input type="file" id="print-file"></div>
+		<div class="controller-step">2. 选择打印范围：
+			<select id="print-range" onchange="onPrintRangeChange();">
+				<option value="10000">全谱</option>
+				<option value="50">前50手</option>
+				<option value="100">前100手</option>
+			</select>
+		</div>
+		<div class="controller-step">3. <button onclick="window.print()" id="print-button">按此打印</button></div>
+	</div>
+	<div id="main-area">
+		<div id="sgf-metadata" class="flex-column">
+			<div id="game-info"></div>
+			<div id="game-players" class="flex-row">
+				<div id="game-player-black" class="flex-row"></div>
+				<div id="game-player-white" class="flex-row"></div>
+				<div id="game-player-result" class="flex-row"></div>
+				<div id="game-range" class="flex-row"></div>
+			</div>
+		</div>
+		<div id="board"></div>
+		<div id="overlap-stones-area"></div>
+
+		<script>
+			function buildBoard() {
+				let boardNode = document.getElementById('board');
+				for (let row = 0; row <= 20; row++) {
+					let rowNode = createDivWithClass('board-row');
+					for (let col = 0; col <= 20; col++) {
+						let cellNode = createDivWithClass('board-cell');
+						if (row == 0 || col == 0 || row == 20 || col == 20) {
+							cellNode.classList.add('board-cell-for-coordinates');
+							let coordinateTextNode = createDivWithClass('board-cell-coordinates-text');
+							cellNode.appendChild(coordinateTextNode);
+						}
+						cellNode.setAttribute('id', 'board-cell-' + row + '-' + col);
+						rowNode.append(cellNode);
+					}
+					boardNode.append(rowNode);
+				}
+			}
+
+			function createStoneElement(step, delta = 0) {
+				let stoneNode = createDivWithClass('stone');
+				let isBlack = (Math.abs(step) % 2 == 1)
+				if (isBlack) {
+					stoneNode.classList.add('stone-black');
+				} else {
+					stoneNode.classList.add('stone-white');
+				}
+				if (step - delta > 0) {
+					let displayNumberText = step - delta;
+					let stoneTextNode = createDivWithClass('stone-text');
+					if (displayNumberText >= 100) {
+						stoneTextNode.classList.add('stone-text-small');
+					} else {
+						stoneTextNode.classList.add('stone-text-big');
+					}
+					stoneTextNode.innerText = displayNumberText;
+					stoneNode.append(stoneTextNode);
+				}
+				return stoneNode;
+			}
+
+			function openSgfFile(e) {
+				let file = e.target.files[0];
+				if (!file) {
+					return;
+				}
+				let reader = new FileReader();
+				reader.onload = function (e) {
+					let contents = e.target.result;
+					// Display file content
+					let obj = parseSgfFile(contents);
+					globalSgfData = parseSgfObj(obj);
+					redrawGame(globalSgfData);
+				};
+				reader.readAsText(file);
+			}
+
+			function parseSgfObj(obj) {
+				let data = {};
+				data.stoneOnBoard = new Array(361);
+				let s = obj[0];
+				data.props = s.props;
+				let currentMove = 0;
+				s = s.children[0];
+				while ('props' in s) {
+					currentMove++;
+					var place = '';
+					if ('B' in s.props) {
+						if (currentMove % 2 == 0) currentMove++;
+						place = s.props['B'][0];
+					} else if ('W' in s.props) {
+						if (currentMove % 2 == 1) currentMove++;
+						place = s.props['W'][0];
+					}
+					var col = place.charCodeAt(0) - 97;
+					var row = place.charCodeAt(1) - 97;
+					var index = row * 19 + col;
+					if (!data.stoneOnBoard[index]) {
+						data.stoneOnBoard[index] = [];
+					}
+					data.stoneOnBoard[index].push(currentMove);
+
+					if (s.children.length == 0) break;
+					s = s.children[0]
+				}
+				data.totalMove = currentMove;
+				console.log(data)
+				return data;
+			}
+
+			function parseSgfFile(str) {
+				const collection = [];
+				const stack = [collection];
+				let node = null;
+				let index = 0;
+				while (index < str.length) {
+					const c = str[index];
+					if (c === '(') {
+						stack.push(null);
+						index++;
+					} else if (c === ')') {
+						stack.pop();
+						index++;
+					} else if (c === ';') {
+						node = { props: {}, children: [] };
+						const parent = stack.pop() || stack[stack.length - 1];
+						if (parent == null) throw new Error();
+						parent.push(node);
+						stack.push(node.children);
+						index++;
+					} else if (/[A-Z]/.test(c)) {
+						if (node == null) throw new Error();
+						var propIdentEnd = index + 1;
+						while (/[A-Z]/.test(str[propIdentEnd])) {
+							propIdentEnd++;
+						}
+						const propIdent = str.substring(index, propIdentEnd);
+						index = propIdentEnd;
+						const values = [];
+						while (!/[A-Z;)(]/.test(str[index])) {
+							if (str[index] === '[') {
+								index++;
+								// TODO: escaping
+								let valueEnd = index + 1;
+								while (str[valueEnd] !== ']') {
+									valueEnd++;
+								}
+								values.push(str.substring(index, valueEnd));
+								index = valueEnd;
+							} else {
+								index++;
+							}
+						}
+						node.props[propIdent] = values;
+					} else {
+						index++;
+					}
+				}
+				return collection;
+			}
+
+			function clearElement(node) {
+				while (node.firstChild) {
+					node.removeChild(node.lastChild);
+				}
+			}
+
+			function clearElementById(id) {
+				var node = document.getElementById(id);
+				clearElement(node);
+			}
+
+			function createDivWithClass(className = null) {
+				var node = document.createElement('div');
+				if (className) {
+					node.classList.add(className);
+				}
+				return node;
+			}
+
+			function redrawGame(data) {
+				let maxMovesToDraw = parseInt(document.getElementById("print-range").value);
+				if (Object.keys(data).length == 0) return;
+
+				clearElementById('game-info');
+				clearElementById('game-player-black');
+				clearElementById('game-player-white');
+				clearElementById('game-player-result');
+				clearElementById('game-range');
+
+				let gameRangeNode = document.getElementById('game-range');
+				gameRangeNode.innerText = (maxMovesToDraw < 10000 && maxMovesToDraw < data.totalMove ) ? '(前' + maxMovesToDraw + '手)' : '(共' + data.totalMove + '手)' ;
+
+				if ('EV' in data.props || 'GN' in data.props) {
+					let gameInfoNode = document.getElementById('game-info');
+					if ('EV' in data.props) {
+						gameInfoNode.innerText = data.props['EV'];
+					} else if ('GN' in data.props) {
+						gameInfoNode.innerText = data.props['GN'];
+					}
+				}
+
+				if ('PB' in data.props) {
+					let playerBlackNode = document.getElementById('game-player-black');
+					playerBlackNode.appendChild(createStoneElement(-1))
+					let nameElement = createDivWithClass();
+					let t = data.props['PB'];
+					// if ('BR' in data.props) {
+					//	t = t + ' ' + data.props['BR'];
+					// }
+					nameElement.innerText = t;
+					nameElement.style.marginLeft = "2mm";
+					playerBlackNode.appendChild(nameElement);
+				}
+				if ('PW' in data.props) {
+					let playerWhiteNode = document.getElementById('game-player-white');
+					playerWhiteNode.appendChild(createStoneElement(0))
+					let nameElement = createDivWithClass();
+					let t = data.props['PW'];
+					// if ('WR' in data.props) {
+					//	t = t + ' ' + data.props['WR'];
+					// }
+					nameElement.innerText = t;
+					nameElement.style.marginLeft = "2mm";
+					playerWhiteNode.appendChild(nameElement);
+				}
+				if ('RE' in data.props) {
+					let gameResultNode = document.getElementById('game-player-result');
+					let resultText = '';
+					raw = data.props['RE'][0].toUpperCase();
+					let winner = raw[0];
+					resultText += (winner == 'B') ? '黑' : '白';
+					if (raw.length <= 2) {
+						resultText += '胜';
+					} else if (raw[2] == 'R') {
+						resultText += '中盘胜';
+					} else if (raw[2] == 'T') {
+						resultText += '时间胜';
+					} else {
+						var n = parseFloat(raw.substring(2));
+						if (n * 100 % 50 == 0) {
+							resultText += '胜' + n + '目';
+						} else {
+							resultText += '胜' + n + '子';
+						}
+					}
+					gameResultNode.innerText = resultText;
+				}
+
+				var needOverlap = {};
+				for (var index = 0; index < 361; index++) {
+					var row = Math.floor(index / 19) + 1;
+					var col = index % 19 + 1;
+					var cellNode = document.getElementById('board-cell-' + row + '-' + col);
+					clearElement(cellNode);
+					if (data.stoneOnBoard[index]) {
+						var moveCount = data.stoneOnBoard[index][0];
+						if (moveCount <= maxMovesToDraw) {
+							cellNode.appendChild(createStoneElement(moveCount));
+						}
+						if (data.stoneOnBoard[index].length >= 2 && data.stoneOnBoard[index][1] <= maxMovesToDraw) {
+							needOverlap[data.stoneOnBoard[index][1]] = index;
+						}
+					}
+				}
+				var overlapAreaNode = document.getElementById('overlap-stones-area');
+				clearElement(overlapAreaNode);
+				for (var key in needOverlap) {
+					let stoneList = data.stoneOnBoard[needOverlap[key]];
+					let nodeWidth = 0;
+					let overlapStonesNode = createDivWithClass('overlap-stones')
+					for (var index = 1; index < stoneList.length; index++) {
+						if (stoneList[index] <= maxMovesToDraw) {
+							overlapStonesNode.appendChild(createStoneElement(stoneList[index]));
+							nodeWidth += 9;
+						}
+					}
+					let equalNode = createDivWithClass('overlap-equal');
+					equalNode.innerText = "=";
+					overlapStonesNode.appendChild(equalNode);
+					nodeWidth += 6;
+					overlapStonesNode.appendChild(createStoneElement(stoneList[0]));
+					nodeWidth += 9;
+					overlapStonesNode.style.width = nodeWidth + 'mm';
+					overlapAreaNode.appendChild(overlapStonesNode);
+				}
+			}
+
+			function onPrintRangeChange() {
+				redrawGame(globalSgfData);
+
+			}
+
+			let globalSgfData = {};
+			buildBoard();
+			document.getElementById('print-file').addEventListener('change', openSgfFile, false);
+		</script>
+</body>
+
+</html>
